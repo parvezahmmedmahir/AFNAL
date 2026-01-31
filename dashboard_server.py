@@ -54,8 +54,12 @@ async def websocket_endpoint(websocket: WebSocket):
     client = await get_client()
     
     if client is None:
-        print("[WS] Client initialization failed!")
-        await websocket.send_json({"type": "error", "message": "Failed to connect to Quotex"})
+        # Try one more time with a fresh connection attempt to get the specific reason
+        email, password = credentials()
+        temp_client = Quotex(email=email, password=password)
+        check, reason = await temp_client.connect()
+        print(f"[WS] Client initialization failed! Reason: {reason}")
+        await websocket.send_json({"type": "error", "message": f"Connection failed: {reason}"})
         await websocket.close()
         return
     print("[WS] Client initialized successfully.")

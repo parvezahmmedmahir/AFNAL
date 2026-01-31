@@ -3,7 +3,8 @@ const fs = require('fs');
 const path = require('path');
 
 // Configuration
-const WS_URL = 'ws://127.0.0.1:8000/ws';
+const WS_URL = process.env.WS_URL || "ws://127.0.0.1:8000/ws";
+console.log(`📡 [24H] Connecting to server at: ${WS_URL}`);
 const DATA_DIR = path.join(__dirname, '../data/24h');
 const TIMEFRAME = 60; // 1 minute
 
