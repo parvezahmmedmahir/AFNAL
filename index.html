@@ -223,8 +223,11 @@
 
         function connect() {
             if (ws) ws.close();
-            log("Connecting to WebSocket...");
-            ws = new WebSocket("ws://127.0.0.1:8000/ws");
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.host;
+            const wsUrl = `${protocol}//${host}/ws`;
+            log(`Connecting to WebSocket at ${wsUrl}...`);
+            ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
                 log("WebSocket Connected!", 'success');
