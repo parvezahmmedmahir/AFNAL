@@ -238,4 +238,7 @@ async def websocket_endpoint(websocket: WebSocket):
         monitor_task.cancel()
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    import os
+    port = int(os.getenv("PORT", 8000))
+    print(f"�️ Starting WebSocket Server on port {port}...")
+    uvicorn.run(app, host="0.0.0.0", port=port)
