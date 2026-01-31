@@ -80,7 +80,7 @@ class QuotexAPI(object):
             host="qxbroker.com",
             username=None,
             password=None,
-            lang,
+            lang="en",
             proxies=None,
             resource_path=None,
             user_data_dir="."
