@@ -124,58 +124,105 @@ async def get_assets():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/api/snapshot")
+async def get_market_snapshot():
+    """Get full OHLC snapshot for ALL active markets in one call"""
+    try:
+        snapshot_file = DATA_DIR / "live_snapshot.json"
+        if not snapshot_file.exists():
+            # Fallback to scanning recent files if no live snapshot
+            assets = []
+            for file in RECENT_DIR.glob("*.json"):
+                try:
+                    with open(file, 'r') as f:
+                        data = json.load(f)
+                        if data:
+                            last = data[-1]
+                            assets.append({
+                                "symbol": file.stem,
+                                "price": last['close'],
+                                "ohlc": last,
+                                "source": "cache"
+                            })
+                except: continue
+            return {"total": len(assets), "data": assets}
+
+        with open(snapshot_file, 'r') as f:
+            snapshot = json.load(f)
+            
+        formatted = []
+        for asset, candle in snapshot.items():
+            change = ((candle['close'] - candle['open']) / candle['open']) * 100 if candle['open'] != 0 else 0
+            formatted.append({
+                "symbol": asset,
+                "price": candle['close'],
+                "open": candle['open'],
+                "high": candle['high'],
+                "low": candle['low'],
+                "close": candle['close'],
+                "change_percent": round(change, 4),
+                "timestamp": candle['time']
+            })
+            
+        return {
+            "total": len(formatted),
+            "status": "LIVE",
+            "data": sorted(formatted, key=lambda x: x['symbol'])
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/api/price/{asset}")
 async def get_latest_price(asset: str):
-    """Get latest price for an asset with full OHLC data"""
+    """Get latest price for an asset with full OHLC and price change"""
     try:
-        # Path 1: Live Snapshot (Aggregated by Node.js collector)
+        # Path 1: Live Snapshot
         snapshot_file = DATA_DIR / "live_snapshot.json"
         if snapshot_file.exists():
             try:
-                for _ in range(3):
-                    try:
-                        with open(snapshot_file, 'r') as f:
-                            snapshot = json.load(f)
-                            if asset in snapshot:
-                                candle = snapshot[asset]
-                                return {
-                                    "asset": asset,
-                                    "price": candle['close'],
-                                    "open": candle['open'],
-                                    "high": candle['high'],
-                                    "low": candle['low'],
-                                    "close": candle['close'],
-                                    "timestamp": candle['time'],
-                                    "source": "live_streaming",
-                                    "status": "LIVE"
-                                }
-                        break
-                    except json.JSONDecodeError:
-                        await asyncio.sleep(0.1)
+                with open(snapshot_file, 'r') as f:
+                    snapshot = json.load(f)
+                    if asset in snapshot:
+                        c = snapshot[asset]
+                        change = ((c['close'] - c['open']) / c['open']) * 100 if c['open'] != 0 else 0
+                        return {
+                            "asset": asset,
+                            "price": c['close'],
+                            "open": c['open'],
+                            "high": c['high'],
+                            "low": c['low'],
+                            "close": c['close'],
+                            "change_24h": round(change, 4),
+                            "timestamp": c['time'],
+                            "source": "live_streaming",
+                            "status": "LIVE"
+                        }
             except: pass
 
-        # Path 2: Recent History File Fallback
+        # Path 2: Recent History Fallback
         recent_file = RECENT_DIR / f"{asset}.json"
         if recent_file.exists():
             try:
                 with open(recent_file, 'r') as f:
                     candles = json.load(f)
                     if candles:
-                        last = candles[-1]
+                        c = candles[-1]
+                        change = ((c['close'] - c['open']) / c['open']) * 100 if c['open'] != 0 else 0
                         return {
                             "asset": asset,
-                            "price": last['close'],
-                            "open": last['open'],
-                            "high": last['high'],
-                            "low": last['low'],
-                            "close": last['close'],
-                            "timestamp": last['time'],
+                            "price": c['close'],
+                            "open": c['open'],
+                            "high": c['high'],
+                            "low": c['low'],
+                            "close": c['close'],
+                            "change_cached": round(change, 4),
+                            "timestamp": c['time'],
                             "source": "disk_cache",
                             "status": "CACHED"
                         }
             except: pass
 
-        return {"asset": asset, "status": "NOT_FOUND", "message": "No data available yet"}
+        return {"asset": asset, "status": "NOT_FOUND"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
