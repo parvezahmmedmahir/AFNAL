@@ -12,9 +12,16 @@ from fastapi.responses import HTMLResponse
 from pyquotex.stable_api import Quotex
 from pyquotex.config import credentials, load_session
 
-app = FastAPI(title="LUX Master Hub", version="1.0.0")
+# --- INITIALIZATION ---
+app = FastAPI(
+    title="LUX Master Hub", 
+    description="Unified API and WebSocket Hub for Quotex OTC Markets",
+    version="2.0.0",
+    docs_url="/lux/docs",
+    redoc_url="/lux/redoc",
+    openapi_url="/lux/openapi.json"
+)
 
-# Enable CORS for the whole hub
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -32,7 +39,7 @@ MONTHLY_DIR = DATA_DIR / "monthly"
 # Global Quotex client
 client = None
 
-# Prefix all API routes with /lux
+# API Router with prefix
 router = APIRouter(prefix="/lux")
 
 async def get_client():
@@ -54,7 +61,7 @@ async def get_client():
             return None
     return client
 
-# --- MASTER API ENDPOINTS ---
+# --- MASTER API ENDPOINTS (REST) ---
 
 @router.get("/")
 async def api_root():
@@ -77,7 +84,8 @@ async def get_assets():
             for file in RECENT_DIR.glob("*.json"):
                 assets.append({
                     "symbol": file.stem,
-                    "active": True
+                    "active": True,
+                    "file_size": file.stat().st_size
                 })
         return {"total": len(assets), "assets": sorted(assets, key=lambda x: x['symbol'])}
     except Exception as e:
@@ -94,9 +102,9 @@ async def get_latest_price(asset: str):
                     return {
                         "asset": asset,
                         "price": snapshot[asset]['close'],
+                        "timestamp": snapshot[asset]['time'],
                         "status": "LIVE",
-                        "market_open": True,
-                        "source": "live_snapshot"
+                        "market_open": True
                     }
         return {"asset": asset, "status": "CLOSED", "market_open": False}
     except Exception as e:
@@ -118,7 +126,7 @@ async def get_recent_data(asset: str, limit: Optional[int] = 600):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- DASHBOARD LOGIC ---
+# --- DASHBOARD LOGIC (WEBSOCKETS) ---
 
 @app.get("/")
 async def get_dashboard():
@@ -127,23 +135,41 @@ async def get_dashboard():
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    await websocket.send_json({"type": "hello", "message": "LUX Stream Connected"})
+    await websocket.send_json({"type": "hello", "message": "LUX Master Hub Activated"})
     
     cl = await get_client()
     if cl is None:
-        # Get specific failure reason for user
-        e, p = credentials()
-        _, reason = await Quotex(email=e, password=p).connect()
+        email, password = credentials()
+        _, reason = await Quotex(email=email, password=password).connect()
         await websocket.send_json({"type": "error", "message": f"Broker connection failed: {reason}"})
         await websocket.close()
         return
 
+    # Send initial asset list
+    instruments = await cl.get_instruments()
+    asset_list = []
+    for i in instruments:
+        if len(i) > 14:
+            asset_list.append({"symbol": i[1], "name": i[2], "open": bool(i[14])})
+    await websocket.send_json({"type": "assets", "data": asset_list})
+
     active_asset = None
-    subscribe_all = False
     
-    # [Tick relay and logic continues here...]
-    # For brevity, reusing the existing logic in the background
-    relay_task = asyncio.create_task(relay_ticks(websocket, cl))
+    # Background relay task
+    async def relay_ticks():
+        try:
+            while True:
+                for asset in list(cl.api.realtime_price.keys()):
+                    ticks = cl.api.realtime_price.get(asset, [])
+                    if ticks:
+                        cl.api.realtime_price[asset] = []
+                        for tick in ticks:
+                            await websocket.send_json({"type": "tick", "asset": asset, "data": tick})
+                await asyncio.sleep(0.05)
+        except:
+            pass
+
+    asyncio.create_task(relay_ticks())
     
     try:
         while True:
@@ -154,23 +180,13 @@ async def websocket_endpoint(websocket: WebSocket):
                 cl.start_candles_stream(active_asset, 60)
                 history = await cl.get_candles_v3(active_asset, 600, 60)
                 await websocket.send_json({"type": "history", "asset": active_asset, "data": history})
+            elif data["type"] == "subscribe_all":
+                for i in instruments:
+                    if i[14]: cl.start_candles_stream(i[1], 60)
     except:
         pass
 
-async def relay_ticks(ws, cl):
-    try:
-        while True:
-            # Relay ticks for everything currently in the buffer
-            for asset in list(cl.api.realtime_price.keys()):
-                ticks = cl.api.realtime_price.get(asset, [])
-                if ticks:
-                    cl.api.realtime_price[asset] = []
-                    for tick in ticks:
-                        await ws.send_json({"type": "tick", "asset": asset, "data": tick})
-            await asyncio.sleep(0.1)
-    except:
-        pass
-
+# Include all API routes
 app.include_router(router)
 
 if __name__ == "__main__":
