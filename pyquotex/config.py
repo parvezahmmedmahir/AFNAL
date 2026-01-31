@@ -12,24 +12,41 @@ config = configparser.ConfigParser(interpolation=None)
 
 
 def credentials():
+    # 1. Check Environment Variables (Best for Cloud/Render)
+    env_email = os.getenv("QUOTEX_EMAIL")
+    env_password = os.getenv("QUOTEX_PASSWORD")
+    
+    if env_email and env_password:
+        return env_email, env_password
 
+    # 2. Check config.ini
     if not config_path.exists():
-        config_path.parent.mkdir(exist_ok=True, parents=True)
-        text_settings = (
-            f"[settings]\n"
-            f"email={input('Enter your account email: ')}\n"
-            f"password={input('Enter your account password: ')}\n"
-        )
-        config_path.write_text(text_settings)
+        # Only ask for input if we are in an interactive terminal
+        if sys.stdin.isatty():
+            config_path.parent.mkdir(exist_ok=True, parents=True)
+            text_settings = (
+                f"[settings]\n"
+                f"email={input('Enter your account email: ')}\n"
+                f"password={input('Enter your account password: ')}\n"
+            )
+            config_path.write_text(text_settings)
+        else:
+            print("ERROR: config.ini not found and no environment variables set (QUOTEX_EMAIL, QUOTEX_PASSWORD).")
+            print("Please set these variables in your hosting dashboard.")
+            sys.exit(1)
 
     config.read(config_path, encoding="utf-8")
 
-    email = config.get("settings", "email")
-    password = config.get("settings", "password")
+    try:
+        email = config.get("settings", "email")
+        password = config.get("settings", "password")
+    except:
+        email = None
+        password = None
 
     if not email or not password:
         print("Email and password cannot be left blank...")
-        sys.exit()
+        sys.exit(1)
 
     return email, password
 
