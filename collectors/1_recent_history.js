@@ -120,9 +120,14 @@ setInterval(() => {
     });
 
     const snapshotPath = path.join(DATA_DIR, '../live_snapshot.json');
-    fs.writeFile(snapshotPath, JSON.stringify(snapshot), (err) => {
-        if (err) console.error("Failed to save live snapshot:", err);
-    });
+    const tempPath = snapshotPath + '.tmp';
+
+    try {
+        fs.writeFileSync(tempPath, JSON.stringify(snapshot));
+        fs.renameSync(tempPath, snapshotPath);
+    } catch (err) {
+        console.error("Failed to save live snapshot:", err);
+    }
 }, 2000);
 
 connect();
