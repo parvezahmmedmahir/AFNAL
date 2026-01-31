@@ -21,24 +21,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global Quotex client
+# Global Quotex client and connection status
 client = None
+last_error = "Not initialized"
 
 async def get_client():
-    global client
+    global client, last_error
     if client is None:
-        print("Initializing Quotex client...")
         try:
             email, password = credentials()
+            if not email or not password:
+                last_error = "Missing QUOTEX_EMAIL or QUOTEX_PASSWORD in environment variables"
+                return None
+            
             client = Quotex(email=email, password=password)
             check, reason = await client.connect()
             if not check:
-                print(f"Connection failed: {reason}")
+                last_error = f"Connection failed: {reason}"
+                # If reason contains 'pin', we keep the client object to allow verification
+                if "pin" in str(reason).lower() or "verify" in str(reason).lower():
+                    return client
                 client = None
                 return None
-            print("Quotex client initialized.")
+            last_error = "Connected"
         except Exception as e:
-            print(f"Error initializing client: {e}")
+            last_error = f"Exception during init: {str(e)}"
             client = None
             return None
     return client
@@ -47,20 +54,35 @@ async def get_client():
 async def root():
     return {
         "status": "online",
+        "connection": last_error,
         "message": "PyQuotex Headless API is running",
         "endpoints": {
             "ws": "/ws (WebSocket for live data)",
             "assets": "/api/assets",
             "balance": "/api/balance",
-            "profile": "/api/profile"
+            "profile": "/api/profile",
+            "verify": "/api/verify?pin=XXXXXX (If email PIN is required)"
         }
     }
+
+@app.get("/api/verify")
+async def verify_pin(pin: str):
+    global client, last_error
+    if not client:
+        return {"error": "Client not initialized. Try visiting /api/assets first to trigger login."}
+    
+    check, reason = await client.send_pin(pin)
+    if check:
+        last_error = "Connected (Success after PIN)"
+        return {"status": "success", "message": "PIN accepted and connected!"}
+    else:
+        return {"status": "failed", "message": f"PIN rejected: {reason}"}
 
 @app.get("/api/assets")
 async def get_assets():
     q_client = await get_client()
-    if not q_client:
-        return {"error": "API not connected"}
+    if not q_client or last_error != "Connected":
+        return {"error": "API not connected", "reason": last_error}
     
     instruments = await q_client.get_instruments()
     asset_list = []
