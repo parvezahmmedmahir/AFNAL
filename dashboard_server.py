@@ -33,16 +33,31 @@ async def get_client():
         try:
             email, password = credentials()
             if not email or not password:
-                last_error = "Missing Credentials"
+                last_error = "Missing QUOTEX_EMAIL or QUOTEX_PASSWORD"
                 return None
+            
+            # Initialize client
             client = Quotex(email=email, password=password)
-            check, reason = await client.connect()
-            if not check:
-                last_error = f"Login Failed: {reason}"
-                return client if "pin" in str(reason).lower() else None
-            last_error = "Connected"
+            
+            # The .connect() method might throw a RuntimeError if the initial page load fails
+            try:
+                check, reason = await client.connect()
+                if not check:
+                    last_error = f"Login Failed: {reason}"
+                    # Keep client for PIN verification if needed
+                    if "pin" in str(reason).lower() or "verify" in str(reason).lower():
+                        return client
+                    client = None
+                    return None
+                last_error = "Connected"
+            except RuntimeError as re:
+                last_error = f"Connection Error: {str(re)}"
+                # Usually happens when Cloudflare blocks the initial request
+                client = None
+                return None
         except Exception as e:
             last_error = f"Fatal Error: {str(e)}"
+            client = None
     return client
 
 def save_candle(folder, asset, candle):
@@ -170,9 +185,10 @@ async def get_history(folder: str, asset: str, tf: int = 1):
         aggregated.append({
             "time": chunk[0]["time"],
             "open": chunk[0]["open"],
-            "high": max(c["high"] for c in chunk),
-            "low": min(c["low"] for c in chunk),
-            "close": chunk[-1]["close"]
+            "high": max(c.get("high", c["close"]) for c in chunk),
+            "low": min(c.get("low", c["close"]) for c in chunk),
+            "close": chunk[-1]["close"],
+            "ticks": sum(c.get("ticks", 1) for c in chunk)
         })
     return aggregated
 
