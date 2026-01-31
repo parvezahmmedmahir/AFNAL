@@ -126,22 +126,26 @@ async def get_assets():
 
 @router.get("/api/price/{asset}")
 async def get_latest_price(asset: str):
-    """Get latest price for an asset with multi-path fallback for stability"""
+    """Get latest price for an asset with full OHLC data"""
     try:
-        # Path 1: Live Snapshot (Aggregated)
+        # Path 1: Live Snapshot (Aggregated by Node.js collector)
         snapshot_file = DATA_DIR / "live_snapshot.json"
         if snapshot_file.exists():
             try:
-                # Read with small retry for atomicity
                 for _ in range(3):
                     try:
                         with open(snapshot_file, 'r') as f:
                             snapshot = json.load(f)
                             if asset in snapshot:
+                                candle = snapshot[asset]
                                 return {
                                     "asset": asset,
-                                    "price": snapshot[asset]['close'],
-                                    "timestamp": snapshot[asset]['time'],
+                                    "price": candle['close'],
+                                    "open": candle['open'],
+                                    "high": candle['high'],
+                                    "low": candle['low'],
+                                    "close": candle['close'],
+                                    "timestamp": candle['time'],
                                     "source": "live_streaming",
                                     "status": "LIVE"
                                 }
@@ -150,7 +154,7 @@ async def get_latest_price(asset: str):
                         await asyncio.sleep(0.1)
             except: pass
 
-        # Path 2: Recent History File (Last candle)
+        # Path 2: Recent History File Fallback
         recent_file = RECENT_DIR / f"{asset}.json"
         if recent_file.exists():
             try:
@@ -161,6 +165,10 @@ async def get_latest_price(asset: str):
                         return {
                             "asset": asset,
                             "price": last['close'],
+                            "open": last['open'],
+                            "high": last['high'],
+                            "low": last['low'],
+                            "close": last['close'],
                             "timestamp": last['time'],
                             "source": "disk_cache",
                             "status": "CACHED"
