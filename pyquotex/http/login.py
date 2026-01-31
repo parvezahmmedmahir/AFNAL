@@ -39,16 +39,20 @@ class Login(Browser):
         self.headers["Sec-Fetch-Dest"] = "document"
         self.headers["Sec-Fetch-Mode"] = "navigate"
         self.headers["Dnt"] = "1"
-        self.send_request(
-            "GET",
-            f"{self.full_url}/sign-in/modal/"
-        )
-        html = self.get_soup()
-        match = html.find(
-            "input", {"name": "_token"}
-        )
-        token = None if not match else match.get("value")
-        return token
+        try:
+            self.send_request(
+                "GET",
+                f"{self.full_url}/sign-in/modal/"
+            )
+            html = self.get_soup()
+            match = html.find(
+                "input", {"name": "_token"}
+            )
+            token = None if not match else match.get("value")
+            return token
+        except Exception as e:
+            print(f"Error fetching token: {e}")
+            return None
 
     async def awaiting_pin(self, data, input_message):
         from pathlib import Path
