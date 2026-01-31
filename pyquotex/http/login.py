@@ -12,54 +12,43 @@ class Login(Browser):
     url = ""
     cookies = None
     ssid = None
-    # Stable domains for 2026/01
-    alternative_domains = ['qxbroker.com', 'quotex.io', 'market-qx.trade', 'quotex-broker.com']
-    base_url = alternative_domains[0]
+    base_url = 'market-qx.trade'
     https_base_url = f'https://{base_url}'
 
     def __init__(self, api, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.api = api
         self.html = None
-        self.headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-            "Referer": "https://www.google.com/"
-        }
+        self.headers = self.get_headers()
         self.full_url = f"{self.https_base_url}/{api.lang}"
 
     def get_token(self):
-        """Attempts to fetch the CSRF token from multiple domains if blocked."""
-        for domain in self.alternative_domains:
-            try:
-                print(f"Bypass: Trying {domain}...")
-                self.base_url = domain
-                self.https_base_url = f'https://{domain}'
-                self.full_url = f"{self.https_base_url}/{self.api.lang}"
-                
-                # Try the direct sign-in page
-                target_url = f"{self.full_url}/sign-in/"
-                resp = self.send_request("GET", target_url, timeout=15)
-                
-                if resp and resp.status_code == 200:
-                    html = self.get_soup()
-                    match = html.find("input", {"name": "_token"})
-                    if match:
-                        token = match.get("value")
-                        print(f"SUCCESS: Bypass worked on {domain}")
-                        return token
-                    else:
-                        print(f"WARN: Cloudflare challenge detected on {domain} (No token found)")
-                else:
-                    code = resp.status_code if resp else "No Response"
-                    print(f"FAIL: {domain} returned status {code}")
-            except Exception as e:
-                print(f"ERR: {domain} failed - {str(e)}")
-                continue
-        return None
+        self.headers["Connection"] = "keep-alive"
+        self.headers["Accept-Encoding"] = "gzip, deflate, br"
+        self.headers["Accept-Language"] = "pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3"
+        self.headers["Accept"] = (
+            "text/html,application/xhtml+xml,application/xml;q=0.9,"
+            "image/avif,image/webp,*/*;q=0.8"
+        )
+        self.headers["Referer"] = f"{self.full_url}/sign-in"
+        self.headers["Upgrade-Insecure-Requests"] = "1"
+        self.headers["Sec-Ch-Ua-Mobile"] = "?0"
+        self.headers["Sec-Ch-Ua-Platform"] = '"Linux"'
+        self.headers["Sec-Fetch-Site"] = "same-origin"
+        self.headers["Sec-Fetch-User"] = "?1"
+        self.headers["Sec-Fetch-Dest"] = "document"
+        self.headers["Sec-Fetch-Mode"] = "navigate"
+        self.headers["Dnt"] = "1"
+        self.send_request(
+            "GET",
+            f"{self.full_url}/sign-in/modal/"
+        )
+        html = self.get_soup()
+        match = html.find(
+            "input", {"name": "_token"}
+        )
+        token = None if not match else match.get("value")
+        return token
 
     async def awaiting_pin(self, data, input_message):
         from pathlib import Path

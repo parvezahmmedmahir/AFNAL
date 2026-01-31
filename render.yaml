@@ -1,0 +1,34 @@
+services:
+  # 🌐 Main API & Dashboard Hub
+  - type: web
+    name: quotex-api-hub
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python api_server.py
+    envVars:
+      - key: PORT
+        value: 8001
+
+  # 🛰️ WebSocket Streaming Server
+  - type: web
+    name: quotex-ws-server
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python dashboard_server.py
+    envVars:
+      - key: PORT
+        value: 8000
+
+  # 🛸 Data Harvester (Background Worker)
+  - type: worker
+    name: quotex-harvester
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python otc_harvester.py
+
+  # 📥 Data Collectors (Background Worker - Node.js)
+  - type: worker
+    name: quotex-collectors
+    env: node
+    buildCommand: cd collectors && npm install
+    startCommand: node collectors/1_recent_history.js & node collectors/2_daily_cycle.js & node collectors/3_monthly_archive.js

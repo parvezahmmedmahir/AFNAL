@@ -191,8 +191,9 @@ class Quotex:
         end_from_time = time.time()
         
         while len(all_candles) < count:
-            # Fetch a block of candles. Offset 10 is enough to trigger historical load.
-            block = await self.get_candles(asset, end_from_time, 10, period)
+            # Fetch a larger block to ensure we get enough data and don't trigger the < 100 check incorrectly
+            # Using offset=200 roughly corresponds to requesting ~200 candles typically, depending on API
+            block = await self.get_candles(asset, end_from_time, 200, period)
             if not block:
                 break
                 
@@ -207,7 +208,7 @@ class Quotex:
             # Shift end_from_time to the oldest candle in the block
             end_from_time = block[0]['time']
             
-            if len(new_candles) < 100: # If block is too small, we reached the end of history
+            if len(new_candles) < 50: # Lowered threshold, but since we request ~200, if we get < 50, it's likely end of history
                 break
             
             # Rate limit/safety sleep

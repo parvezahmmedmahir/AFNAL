@@ -1,10 +1,6 @@
-# 🚀 PyQuotex
-
----
+# 🚀 Professional Broker API System
 <p align="center">
-  <a href="https://github.com/cleitonleonel/pyquotex">
     <img src="pyquotex.png" alt="pyquotex" width="45%" height="auto">
-  </a>
 </p>
 <p align="center">
   <i>Unofficial Quotex Library API Client written in Python!</i>
@@ -35,26 +31,14 @@ Prover ferramentas para desenvolvedores integrarem seus sistemas com a plataform
 
 ---
 
-# 📚 Documentação Completa
-https://cleitonleonel.github.io/pyquotex/
+# 📚 Custom API Documentation
+Served locally at http://127.0.0.1:8001/docs
 
 
 ## 🛠 Instalação
 
-### 1. Clone o repositório:
-
-```bash
-git clone https://github.com/cleitonleonel/pyquotex.git
-cd pyquotex
-poetry install
-poetry run python app.py
-```
-
-### 2. Ou instale diretamente no seu projeto com Poetry:
-
-```bash
-poetry add git+https://github.com/cleitonleonel/pyquotex.git
-```
+### 1. Project Setup:
+Install dependencies and run the servers using the provided scripts.
 
 ### 2.1. Instale com um comando no Termux (Android):
 
@@ -139,10 +123,8 @@ Uma versão privada está disponível com recursos adicionais, estabilidade apri
 
 ---
 
-## 📞 Contato
-
-* Telegram: [@cleitonleonel](https://t.me/cleitonleonel)
-* GitHub: [cleitonleonel](https://github.com/cleitonleonel)
-* LinkedIn: [Cleiton Leonel](https://www.linkedin.com/in/cleiton-leonel-creton-331138167/)
+## 📞 System Support
+* Documentation: BROKER_API_GUIDE.md
+* Usage: PROTOTYPE_DEPLOYMENT.md
 
 ---

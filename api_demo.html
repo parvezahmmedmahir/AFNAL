@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Market Data API Demo</title>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 18px;
+        }
+
+        .api-demo {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .url-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+        }
+
+        button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .asset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .asset-btn {
+            padding: 15px;
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .asset-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        #chart {
+            height: 500px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-label {
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: #333;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .code-example {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        .success {
+            color: #22c55e;
+        }
+
+        .error {
+            color: #ef4444;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Live Market Data API Demo</h1>
+            <p class="subtitle">Real-time OTC market data - Just change the asset name in the URL!</p>
+        </div>
+
+        <div class="api-demo">
+            <h2>Try Any Asset - Just Change the Name!</h2>
+            <div class="url-bar">
+                <input type="text" id="apiUrl" value="http://127.0.0.1:8001/api/price/BTCUSD_otc"
+                    placeholder="Enter API URL">
+                <button onclick="fetchData()">Fetch Data</button>
+            </div>
+
+            <h3>Popular Assets (Click to Load):</h3>
+            <div class="asset-grid" id="assetGrid">
+                <button class="asset-btn" onclick="loadAsset('BTCUSD_otc')">Bitcoin (BTC)</button>
+                <button class="asset-btn" onclick="loadAsset('ETHUSD_otc')">Ethereum (ETH)</button>
+                <button class="asset-btn" onclick="loadAsset('EURUSD_otc')">EUR/USD</button>
+                <button class="asset-btn" onclick="loadAsset('GBPUSD_otc')">GBP/USD</button>
+                <button class="asset-btn" onclick="loadAsset('BRLUSD_otc')">BRL/USD</button>
+                <button class="asset-btn" onclick="loadAsset('AUDUSD_otc')">AUD/USD</button>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Current Asset</div>
+                <div class="stat-value" id="assetName">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Live Price</div>
+                <div class="stat-value" id="currentPrice">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Open</div>
+                <div class="stat-value" id="openPrice">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">High</div>
+                <div class="stat-value" id="highPrice">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Low</div>
+                <div class="stat-value" id="lowPrice">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Close</div>
+                <div class="stat-value" id="closePrice">-</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h2>Live Candlestick Chart</h2>
+            <div id="chart"></div>
+        </div>
+
+        <div class="api-demo">
+            <h2>How to Use This API in Your Project</h2>
+            <p>Anyone can use this API to build trading apps, charts, or bots. Just change the asset name!</p>
+
+            <h3>JavaScript Example:</h3>
+            <div class="code-example">
+                // Fetch any asset - just change the name!<br>
+                fetch('http://127.0.0.1:8001/api/price/<span class="success">BTCUSD_otc</span>')<br>
+                &nbsp;&nbsp;.then(r => r.json())<br>
+                &nbsp;&nbsp;.then(data => {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;console.log(`Price: $${data.price}`);<br>
+                &nbsp;&nbsp;});<br>
+                <br>
+                // Get candle data for charts<br>
+                fetch('http://127.0.0.1:8001/api/recent/<span class="success">EURUSD_otc</span>?limit=100')<br>
+                &nbsp;&nbsp;.then(r => r.json())<br>
+                &nbsp;&nbsp;.then(data => {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;// data.candles contains OHLC data<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;drawChart(data.candles);<br>
+                &nbsp;&nbsp;});
+            </div>
+
+            <h3>Python Example:</h3>
+            <div class="code-example">
+                import requests<br>
+                <br>
+                # Get any asset price<br>
+                asset = '<span class="success">BTCUSD_otc</span>' # Change this!<br>
+                r = requests.get(f'http://127.0.0.1:8001/api/price/{asset}')<br>
+                data = r.json()<br>
+                print(f"{asset}: ${data['price']}")<br>
+                <br>
+                # Get candles for analysis<br>
+                r = requests.get(f'http://127.0.0.1:8001/api/recent/{asset}?limit=100')<br>
+                candles = r.json()['candles']
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chart;
+        let candleSeries;
+        let currentAsset = 'BTCUSD_otc';
+
+        // Initialize chart
+        function initChart() {
+            const chartContainer = document.getElementById('chart');
+            chart = LightweightCharts.createChart(chartContainer, {
+                layout: {
+                    background: { type: 'solid', color: '#ffffff' },
+                    textColor: '#333',
+                },
+                grid: {
+                    vertLines: { color: '#f0f0f0' },
+                    horzLines: { color: '#f0f0f0' },
+                },
+                width: chartContainer.clientWidth,
+                height: 500,
+            });
+
+            candleSeries = chart.addCandlestickSeries({
+                upColor: '#22c55e',
+                downColor: '#ef4444',
+                borderVisible: false,
+                wickUpColor: '#22c55e',
+                wickDownColor: '#ef4444',
+            });
+
+            window.addEventListener('resize', () => {
+                chart.applyOptions({ width: chartContainer.clientWidth });
+            });
+        }
+
+        // Load asset data
+        async function loadAsset(asset) {
+            currentAsset = asset;
+            document.getElementById('apiUrl').value = `http://127.0.0.1:8001/api/price/${asset}`;
+
+            // Fetch price
+            await fetchData();
+
+            // Fetch candles
+            try {
+                const response = await fetch(`http://127.0.0.1:8001/api/recent/${asset}?limit=100`);
+                const data = await response.json();
+
+                if (data.candles && data.candles.length > 0) {
+                    candleSeries.setData(data.candles);
+                    chart.timeScale().fitContent();
+                }
+            } catch (error) {
+                console.error('Error loading candles:', error);
+            }
+        }
+
+        // Fetch data from API
+        async function fetchData() {
+            const url = document.getElementById('apiUrl').value;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.price) {
+                    document.getElementById('assetName').textContent = data.asset;
+                    document.getElementById('currentPrice').textContent = `$${data.price.toFixed(5)}`;
+
+                    if (data.candle) {
+                        document.getElementById('openPrice').textContent = data.candle.open.toFixed(5);
+                        document.getElementById('highPrice').textContent = data.candle.high.toFixed(5);
+                        document.getElementById('lowPrice').textContent = data.candle.low.toFixed(5);
+                        document.getElementById('closePrice').textContent = data.candle.close.toFixed(5);
+                    }
+                }
+            } catch (error) {
+                alert('Error: ' + error.message + '\n\nMake sure the API server is running and the asset exists!');
+            }
+        }
+
+        // Auto-refresh price every 2 seconds
+        setInterval(() => {
+            if (currentAsset) {
+                fetch(`http://127.0.0.1:8001/api/price/${currentAsset}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.price) {
+                            document.getElementById('currentPrice').textContent = `$${data.price.toFixed(5)}`;
+                        }
+                    })
+                    .catch(() => { });
+            }
+        }, 2000);
+
+        // Initialize on load
+        initChart();
+        loadAsset('BTCUSD_otc');
+    </script>
+</body>
+
+</html>

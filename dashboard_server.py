@@ -1,201 +1,241 @@
-import os
-import json
 import asyncio
+import json
 import time
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
+from websockets.exceptions import ConnectionClosed
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pyquotex.stable_api import Quotex
-from pyquotex.config import credentials
-from datetime import datetime, timedelta
+from pyquotex.config import credentials, load_session
+from datetime import datetime
 
-app = FastAPI(title="PyQuotex Ultimate Real-Time 600-Candle Engine")
+from pathlib import Path
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = FastAPI()
 
-# Global Storage
+# Data directories
+DATA_DIR = Path(__file__).parent / "data"
+RECENT_DIR = DATA_DIR / "recent"
+
+# Global Quotex client
 client = None
-last_error = "Not initialized"
-# live_buffers[asset] = [ {time, open, high, low, close, ticks}, ... ] (exactly 600)
-live_buffers = {}
-is_collecting = False
 
 async def get_client():
-    global client, last_error
+    global client
     if client is None:
+        print("Initializing Quotex client...")
         try:
             email, password = credentials()
-            if not email or not password:
-                last_error = "Missing QUOTEX_EMAIL or QUOTEX_PASSWORD"
-                return None
-            
             client = Quotex(email=email, password=password)
-            try:
-                check, reason = await client.connect()
-                if not check:
-                    last_error = f"Login Failed: {reason}"
-                    return client if "pin" in str(reason).lower() else None
-                last_error = "Connected"
-            except Exception as e:
-                last_error = f"Connection error: {str(e)}"
+            check, reason = await client.connect()
+            if not check:
+                print(f"Connection failed: {reason}")
                 client = None
+                return None
+            print("Quotex client initialized.")
         except Exception as e:
-            last_error = f"Initialization error: {str(e)}"
+            print(f"Error initializing client: {e}")
             client = None
+            return None
     return client
 
-async def init_asset_buffer(q_client, asset):
-    """Fetches initial 600 candles from history."""
-    try:
-        # Fetch 600 historical candles
-        candles = await q_client.get_candles_v3(asset, 600, 60)
-        if candles:
-            live_buffers[asset] = candles
-            # Subscribe to real-time stream
-            q_client.start_candles_stream(asset, 60)
-            return True
-    except:
-        return False
-
-async def sync_live_prices():
-    """Updates the 600th candle using real-time WebSocket data."""
-    global client, live_buffers, is_collecting
-    while True:
-        try:
-            q_client = await get_client()
-            if q_client and last_error == "Connected":
-                is_collecting = True
-                
-                # 1. Detect and Init New Assets
-                instruments = await q_client.get_instruments()
-                all_open = [i[1] for i in instruments if len(i) > 14 and i[14]]
-                
-                # Process in batches to initialize buffers if missing
-                for asset in all_open:
-                    if asset not in live_buffers:
-                        await init_asset_buffer(q_client, asset)
-                        await asyncio.sleep(0.1)
-
-                # 2. Update buffers from WebSocket Tick Data
-                for asset in list(live_buffers.keys()):
-                    # Quotex lib stores real-time candles in api.realtime_candles[asset][period]
-                    # We look for the 60-second period.
-                    rt_candle_dict = q_client.api.realtime_candles.get(asset, {}).get(60)
-                    if not rt_candle_dict:
-                        continue
-                    
-                    # Convert dict to our candle format
-                    # rt_candle_dict format: {'open':..., 'close':..., 'high':..., 'low':..., 'time':...}
-                    rt_time = rt_candle_dict.get('time')
-                    if not rt_time: continue
-                    
-                    buffer = live_buffers[asset]
-                    last_buffered = buffer[-1]
-                    
-                    if rt_time == last_buffered['time']:
-                        # Update the current running candle
-                        buffer[-1].update({
-                            'open': rt_candle_dict['open'],
-                            'high': rt_candle_dict['high'],
-                            'low': rt_candle_dict['low'],
-                            'close': rt_candle_dict['close'],
-                            'ticks': rt_candle_dict.get('ticks', last_buffered.get('ticks', 0) + 1)
-                        })
-                    elif rt_time > last_buffered['time']:
-                        # New candle started! Push new, pop old.
-                        new_candle = {
-                            'time': rt_time,
-                            'open': rt_candle_dict['open'],
-                            'high': rt_candle_dict['high'],
-                            'low': rt_candle_dict['low'],
-                            'close': rt_candle_dict['close'],
-                            'ticks': 1
-                        }
-                        buffer.append(new_candle)
-                        if len(buffer) > 600:
-                            buffer.pop(0)
-
-                await asyncio.sleep(1) # High frequency sync
-            else:
-                is_collecting = False
-                await asyncio.sleep(10)
-        except Exception as e:
-            print(f"Sync Error: {e}")
-            await asyncio.sleep(5)
-
-@app.on_event("startup")
-async def startup_event():
-    asyncio.create_task(sync_live_prices())
-
 @app.get("/")
-async def root():
-    q_domain = "Unknown"
-    if client and hasattr(client, 'api') and client.api:
-        # Check login object for current domain
-        from pyquotex.http.login import Login
-        q_domain = getattr(Login, 'base_url', 'Checking...')
-
-    return {
-        "status": "online",
-        "connection": last_error,
-        "current_target": q_domain,
-        "is_collecting": is_collecting,
-        "total_assets": len(live_buffers),
-        "endpoints": {
-            "live_600": "/api/live/{asset}",
-            "assets": "/api/assets",
-            "verify_pin": "/api/verify?pin=XXXXXX"
-        }
-    }
-
-@app.get("/api/live/{asset}")
-async def get_live(asset: str):
-    if asset in live_buffers:
-        return live_buffers[asset]
-    return {"error": "Asset not yet initialized or closed", "asset": asset}
-
-@app.get("/api/assets")
-async def get_assets():
-    q_client = await get_client()
-    if not q_client: return {"error": "Not connected", "reason": last_error}
-    instruments = await q_client.get_instruments()
-    return [{
-        "symbol": i[1], 
-        "name": i[2], 
-        "open": bool(i[14]),
-        "ready": i[1] in live_buffers
-    } for i in instruments if len(i) > 14]
-
-@app.get("/api/verify")
-async def verify(pin: str):
-    global client
-    if not client: return {"error": "Init failed"}
-    ok, msg = await client.send_pin(pin)
-    return {"success": ok, "message": msg}
+async def get():
+    return HTMLResponse(content=open("index.html", encoding="utf-8").read(), status_code=200)
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    active = None
-    async def loop():
+    print("[WS] WebSocket accepted and opened.")
+    await websocket.send_json({"type": "hello", "message": "Connection established"})
+    
+    print("[WS] Initializing/Getting Quotex client...")
+    client = await get_client()
+    
+    if client is None:
+        print("[WS] Client initialization failed!")
+        await websocket.send_json({"type": "error", "message": "Failed to connect to Quotex"})
+        await websocket.close()
+        return
+    print("[WS] Client initialized successfully.")
+
+    active_asset = None
+    active_period = 60
+    subscribe_all = False
+    
+    async def get_formatted_assets():
+        raw = await client.get_instruments()
+        formatted = []
+        for i in raw:
+            try:
+                # i[1] symbol, i[2] name, i[14] is_open
+                if len(i) > 14:
+                    # Filter: Prioritize OTC if requested, but for now send all
+                    formatted.append({
+                        "id": i[0], 
+                        "symbol": i[1], 
+                        "name": i[2],
+                        "open": bool(i[14])
+                    })
+            except Exception:
+                continue
+        return formatted
+
+    # Send initial list
+    asset_list = await get_formatted_assets()
+    
+    print(f"[WS] Sending {len(asset_list)} assets to client.")
+    await websocket.send_json({"type": "assets", "data": asset_list})
+
+    async def market_monitor():
+        nonlocal subscribe_all
         while True:
-            if active and active in live_buffers:
-                # Send the LIVE running candle (the 600th one)
-                await websocket.send_json({"type": "live", "data": live_buffers[active][-1]})
-            await asyncio.sleep(0.5)
-    t = asyncio.create_task(loop())
+            try:
+                await asyncio.sleep(20) # Pulse every 20s
+                print("[WS] Refreshing market status...")
+                updated_assets = await get_formatted_assets()
+                await websocket.send_json({"type": "assets", "data": updated_assets})
+                
+                # If in Subscribe-All mode, ensure we are subscribed to newly opened assets
+                if subscribe_all:
+                    for asset in updated_assets:
+                        if asset['open']:
+                            # start_candles_stream is idempotent (won't hurt if already started)
+                            client.start_candles_stream(asset['symbol'], 60)
+            except Exception as e:
+                print(f"[WS] Market Monitor Info: {e}")
+
+    monitor_task = asyncio.create_task(market_monitor())
+    
+    async def tick_relay():
+        nonlocal active_asset, active_period, subscribe_all
+        try:
+            while True:
+                # Mode 1: Global Subscription (Streams ALL OPEN assets)
+                if subscribe_all:
+                    # Iterate over everything in the realtime buffer
+                    # We accept a race condition here where data might be popped by another task, 
+                    # but since we are the only consumer of this client instance in this context, it's okay.
+                    # Note: Ideally we should use the harvester engine structure, but accessing api.realtime_price directly works.
+                    
+                    # Snapshot keys to avoid runtime change error
+                    current_assets = list(client.api.realtime_price.keys())
+                    for asset in current_assets:
+                        ticks = client.api.realtime_price.get(asset, [])
+                        if ticks:
+                            client.api.realtime_price[asset] = [] # Clear buffer
+                            for tick in ticks:
+                                await websocket.send_json({
+                                    "type": "tick",
+                                    "asset": asset, # Include asset name
+                                    "data": {
+                                        "time": tick['time'],
+                                        "price": tick['price']
+                                    }
+                                })
+                
+                # Mode 2: Single Asset (Legacy Dashboard)
+                elif active_asset:
+                    ticks = client.api.realtime_price.get(active_asset, [])
+                    if ticks:
+                        client.api.realtime_price[active_asset] = []
+                        for tick in ticks:
+                            await websocket.send_json({
+                                "type": "tick",
+                                "asset": active_asset,
+                                "data": {
+                                    "time": tick['time'],
+                                    "price": tick['price']
+                                }
+                            })
+                await asyncio.sleep(0.05) # Faster polling for multi-asset
+        except Exception as e:
+            print(f"[WS-Relay] Error: {e}")
+
+    relay_task = asyncio.create_task(tick_relay())
+
     try:
         while True:
-            data = json.loads(await websocket.receive_text())
-            if data["type"] == "switch": active = data["asset"]
-    except: t.cancel()
+            raw_data = await websocket.receive_text()
+            print(f"[WS] Received: {raw_data[:100]}...")
+            try:
+                data = json.loads(raw_data)
+                
+                # NEW: Subscribe All Command
+                if data["type"] == "subscribe_all":
+                    print("[WS] Enabling Global Subscription Mode (ALL ASSETS)")
+                    subscribe_all = True
+                    # Auto-subscribe to all streaming on the backend
+                    # This requires the client to really be listening to everything.
+                    # We rely on the otc_harvester or master mechanism to keep streams open,
+                    # OR we force open them here.
+                    instruments = await client.get_instruments()
+                    for i in instruments:
+                        if i[14]: # If open
+                           client.start_candles_stream(i[1], 60)
+                    print("[WS] Subscribed to all open streams.")
+                
+                elif data["type"] == "switch":
+                    subscribe_all = False # Disable global if switching to single
+                    new_asset = data["asset"]
+                    new_period = int(data["period"])
+                    print(f"[WS] Switching to {new_asset} ({new_period}s)...")
+                    
+                    # Force update status of this asset specifically
+                    # In a full system we'd check if it's open first
+                    
+                    if active_asset:
+                        client.stop_candles_stream(active_asset)
+                    
+                    active_asset = new_asset
+                    active_period = new_period
+                    
+                    print(f"[WS] Fetching history for {active_asset}...")
+                    try:
+                        # Fetch 600 candles as requested by USER
+                        history = await client.get_candles_v3(active_asset, 600, active_period)
+                        
+                        # Fallback: If broker gives nothing, check our own recent data
+                        if not history:
+                            local_file = RECENT_DIR / f"{active_asset}.json"
+                            if local_file.exists():
+                                print(f"[WS] Broker history empty. Falling back to {local_file}")
+                                with open(local_file, "r") as f:
+                                    history = json.load(f)
+                    except Exception as he:
+                        print(f"[WS] Failed to fetch history: {he}")
+                        history = []
+
+                    print(f"[WS] History fetched: {len(history)} candles.")
+                    
+                    if history:
+                        print(f"[WS] Sample candle: {history[0]}")
+                        print(f"[WS] Last candle: {history[-1]}")
+                    else:
+                        print(f"[WS] WARNING: No history data for {active_asset}")
+                    
+                    client.start_candles_stream(active_asset, active_period)
+                    
+                    await websocket.send_json({
+                        "type": "history",
+                        "asset": active_asset,
+                        "data": history
+                    })
+                    print(f"[WS] Sent history for {active_asset}.")
+            except Exception as process_error:
+                print(f"[WS] Error processing message: {process_error}")
+                
+    except (WebSocketDisconnect, ConnectionClosed):
+        print("[WS] Client disconnected.")
+        relay_task.cancel()
+        monitor_task.cancel() # Cancel monitor too
+        if active_asset:
+            client.stop_candles_stream(active_asset)
+    except Exception as e:
+        print(f"[WS] Loop Exception: {e}")
+        relay_task.cancel()
+        monitor_task.cancel()
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="127.0.0.1", port=8000)

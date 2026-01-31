@@ -1,0 +1,11 @@
+{
+    "name": "quotex-data-collectors",
+    "version": "1.0.0",
+    "description": "Live data collectors for Quotex OTC and Market assets",
+    "main": "1_recent_history.js",
+    "dependencies": {
+        "ws": "^8.18.0"
+    },
+    "author": "Antigravity",
+    "license": "MIT"
+}

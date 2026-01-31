@@ -1,0 +1,459 @@
+[Sat Jan 31 16:31:42 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:31:52 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:32:02 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:32:12 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:32:22 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:32:32 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:32:42 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:32:52 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:33:02 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:33:12 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:33:22 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:33:32 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:33:42 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:33:52 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:34:02 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:34:12 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:34:22 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:34:32 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:34:42 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:34:52 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:35:02 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:35:12 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:35:22 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:35:32 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:35:42 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:35:52 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:36:02 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:36:12 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:36:22 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:36:32 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:36:43 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:36:53 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:37:03 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:37:13 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:37:23 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:37:33 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:37:43 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:37:53 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:38:03 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:38:13 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:38:23 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:38:33 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:38:43 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:38:53 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:39:03 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:39:13 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:39:23 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:43:58 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:44:08 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:44:18 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:44:28 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:44:38 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:44:48 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:44:58 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:45:08 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:45:18 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:45:28 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:45:38 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:45:48 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:45:58 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:46:09 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:46:19 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:46:29 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:46:39 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:46:49 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:46:59 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:47:09 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:47:19 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:47:29 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:47:39 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:47:49 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:47:59 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:48:09 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:48:19 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:48:29 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:48:39 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:48:49 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:48:59 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:49:09 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:49:19 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:49:29 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:49:39 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:49:49 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:49:59 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:50:09 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:50:19 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:51:05 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:51:15 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:51:25 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:51:35 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:51:45 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:51:55 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:52:05 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:52:15 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:52:25 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:52:35 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:52:45 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:52:55 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:53:05 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:53:15 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:53:25 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:53:35 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:53:45 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:53:55 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:54:05 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:54:15 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:54:25 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:54:35 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:54:45 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:54:55 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:55:06 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:55:16 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:55:26 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:55:36 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:55:46 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:55:56 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:56:06 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:56:16 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:56:26 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:56:36 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:56:46 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:56:56 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:57:06 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:57:16 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:57:26 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:57:36 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:57:46 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:57:56 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:58:06 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:58:16 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:58:26 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:58:36 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:58:46 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:58:56 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 16:59:54 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:00:05 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:00:15 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:00:25 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:00:35 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:00:45 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:00:55 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:01:05 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:01:15 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:01:25 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:01:35 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:01:45 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:01:55 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:02:05 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:02:15 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:02:25 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:02:35 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:02:46 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True
+[Sat Jan 31 17:02:56 2026] Discovered 115 assets
+Sample: ADAUSD_otc
+Is AUDCAD present? True

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyQuotex Pro Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            cursor: crosshair;
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 10px;
+        }
+
+        .active-asset {
+            background: #334155;
+            border-left: 4px solid #3b82f6;
+        }
+    </style>
+</head>
+
+<body class="bg-[#0b0e14] text-slate-200 h-screen overflow-hidden flex flex-col">
+
+    <!-- Header -->
+    <header class="h-14 border-b border-slate-800 flex items-center justify-between px-6 glass shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <i data-lucide="trending-up" class="w-5 h-5 text-white"></i>
+            </div>
+            <h1 class="text-lg font-bold tracking-tight">PYQUOTEX <span class="text-blue-500">PRO</span></h1>
+        </div>
+
+        <div class="flex items-center gap-6">
+            <div class="flex bg-slate-800/50 rounded-lg p-1 gap-1" id="timeframes">
+                <button onclick="setTimeframe(5, '5S')"
+                    class="px-3 py-1 text-xs rounded-md hover:bg-slate-700 transition" data-tf="5">5S</button>
+                <button onclick="setTimeframe(60, '1M')" class="px-3 py-1 text-xs rounded-md bg-slate-700 font-medium"
+                    data-tf="60">1M</button>
+                <button onclick="setTimeframe(300, '5M')"
+                    class="px-3 py-1 text-xs rounded-md hover:bg-slate-700 transition" data-tf="300">5M</button>
+                <button onclick="setTimeframe(900, '15M')"
+                    class="px-3 py-1 text-xs rounded-md hover:bg-slate-700 transition" data-tf="900">15M</button>
+                <button onclick="setTimeframe(3600, '1H')"
+                    class="px-3 py-1 text-xs rounded-md hover:bg-slate-700 transition" data-tf="3600">1H</button>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 text-slate-400">
+                    <i data-lucide="circle" class="w-2 h-2 fill-green-500 text-green-500 animate-pulse"></i>
+                    <span class="text-xs font-medium uppercase tracking-widest" id="status">Connecting...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex flex-1 overflow-hidden">
+        <!-- Sidebar Assets -->
+        <aside class="w-72 border-r border-slate-800 flex flex-col glass overflow-hidden">
+            <div class="p-4 border-b border-slate-800">
+                <div class="relative">
+                    <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-slate-500"></i>
+                    <input type="text" id="market-search" placeholder="Search markets..."
+                        class="w-full bg-slate-900 border border-slate-700 rounded-md py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-blue-500 transition">
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto" id="asset-list">
+                <!-- Assets populated here -->
+                <div class="p-8 text-center text-slate-500 text-sm">Loading markets...</div>
+            </div>
+        </aside>
+
+        <!-- Chart Container -->
+        <section class="flex-1 relative bg-[#0b0e14]">
+            <div id="chart" class="w-full h-full"></div>
+
+            <!-- Asset Info Overlay -->
+            <div class="absolute top-6 left-6 z-10 pointer-events-none">
+                <div class="flex items-baseline gap-3">
+                    <h2 class="text-3xl font-bold" id="current-asset">SELECT ASSET</h2>
+                    <span class="text-sm font-medium text-slate-500" id="current-tf">1M</span>
+                </div>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="text-xl font-mono text-blue-400 font-semibold" id="current-price">0.00000</span>
+                    <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400" id="price-change">0.00%</span>
+                </div>
+                <div
+                    class="flex gap-4 mt-2 text-[10px] font-mono text-slate-500 uppercase tracking-widest bg-slate-900/40 p-2 rounded backdrop-blur-sm">
+                    <div>O: <span id="ohlc-o" class="text-slate-300">0.00</span></div>
+                    <div>H: <span id="ohlc-h" class="text-slate-300">0.00</span></div>
+                    <div>L: <span id="ohlc-l" class="text-slate-300">0.00</span></div>
+                    <div>C: <span id="ohlc-c" class="text-slate-300">0.00</span></div>
+                </div>
+            </div>
+
+            <!-- Loader -->
+            <div id="loader" class="absolute inset-0 z-20 bg-[#0b0e14]/80 flex items-center justify-center hidden">
+                <div class="flex flex-col items-center gap-4">
+                    <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin">
+                    </div>
+                    <p class="text-slate-400 font-medium">Fetching Data...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Debug Log Overlay -->
+    <div id="debug-log"
+        class="absolute bottom-0 right-0 w-96 h-48 bg-black/90 text-green-400 font-mono text-xs overflow-y-auto p-2 z-50 opacity-80 pointer-events-none">
+        <div>> System Initialized</div>
+    </div>
+
+    <script>
+        // Simple on-screen logger
+        function log(msg, type = 'info') {
+            const div = document.getElementById('debug-log');
+            const line = document.createElement('div');
+            line.innerText = `> ${msg}`;
+            if (type === 'error') line.style.color = '#ef4444';
+            if (type === 'success') line.style.color = '#22c55e';
+            div.appendChild(line);
+            div.scrollTop = div.scrollHeight;
+            console.log(msg);
+        }
+
+        window.onerror = function (msg, url, line) {
+            log(`JS Error: ${msg} (Line ${line})`, 'error');
+            return false;
+        };
+
+        try {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            } else {
+                log("Warning: Lucide icons failed to load.", 'error');
+            }
+        } catch (e) {
+            log("Error loading icons: " + e.message, 'error');
+        }
+
+        let chart, candleSeries;
+        let selectedAsset = null;
+        let selectedPeriod = 60;
+        let ws;
+        let currentCandle = null;
+
+        function initChart() {
+            try {
+                const chartOptions = {
+                    layout: {
+                        background: { type: 'solid', color: '#0b0e14' },
+                        textColor: '#94a3b8',
+                    },
+                    grid: {
+                        vertLines: { color: 'rgba(71, 85, 105, 0.1)' },
+                        horzLines: { color: 'rgba(71, 85, 105, 0.1)' },
+                    },
+                    crosshair: {
+                        mode: LightweightCharts.CrosshairMode.Normal,
+                        vertLine: { labelBackgroundColor: '#3b82f6' },
+                        horzLine: { labelBackgroundColor: '#3b82f6' },
+                    },
+                    rightPriceScale: {
+                        borderColor: 'rgba(71, 85, 105, 0.3)',
+                        autoScale: true,
+                    },
+                    timeScale: {
+                        borderColor: 'rgba(71, 85, 105, 0.3)',
+                        timeVisible: true,
+                    },
+                    handleScroll: { mouseWheel: true, pressedMouseMove: true },
+                    handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
+                };
+
+                const container = document.getElementById('chart');
+                chart = LightweightCharts.createChart(container, chartOptions);
+
+                candleSeries = chart.addCandlestickSeries({
+                    upColor: '#22c55e',
+                    downColor: '#ef4444',
+                    borderVisible: false,
+                    wickUpColor: '#22c55e',
+                    wickDownColor: '#ef4444',
+                });
+
+                window.addEventListener('resize', () => {
+                    chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+                });
+                log("Chart initialized successfully.", 'success');
+            } catch (e) {
+                log("Chart Init Failed: " + e.message, 'error');
+            }
+        }
+
+        function setTimeframe(s, label) {
+            selectedPeriod = s;
+            document.getElementById('current-tf').innerText = label;
+            document.querySelectorAll('#timeframes button').forEach(b => {
+                b.classList.remove('bg-slate-700', 'font-medium');
+                if (b.dataset.tf == s) b.classList.add('bg-slate-700', 'font-medium');
+            });
+            if (selectedAsset) switchAsset(selectedAsset);
+        }
+
+        function connect() {
+            if (ws) ws.close();
+            log("Connecting to WebSocket...");
+            ws = new WebSocket("ws://127.0.0.1:8000/ws");
+
+            ws.onopen = () => {
+                log("WebSocket Connected!", 'success');
+                document.getElementById('status').innerText = 'Connected';
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+
+                    if (msg.type === 'hello') {
+                        // Handshake
+                    } else if (msg.type === 'assets') {
+                        log(`Received ${msg.data.length} assets.`);
+                        document.getElementById('status').innerText = 'Market Connected';
+                        renderAssetList(msg.data);
+                    } else if (msg.type === 'history') {
+                        if (!candleSeries) {
+                            log("Chart not ready yet.", 'error');
+                            return;
+                        }
+                        log(`Received History: ${msg.data.length} candles.`);
+                        const data = msg.data.map(d => ({
+                            time: Math.floor(d.time),
+                            open: parseFloat(d.open),
+                            high: parseFloat(d.high),
+                            low: parseFloat(d.low),
+                            close: parseFloat(d.close)
+                        })).filter(d => !isNaN(d.time));
+
+                        if (data.length > 0) {
+                            data.sort((a, b) => a.time - b.time);
+                            candleSeries.setData(data);
+                            currentCandle = { ...data[data.length - 1] };
+                            chart.timeScale().fitContent();
+                        } else {
+                            log("No history data available for this market yet.", 'info');
+                            candleSeries.setData([]); // Clear chart
+                        }
+
+                        document.getElementById('loader').classList.add('hidden');
+                    } else if (msg.type === 'tick') {
+                        if (msg.asset === selectedAsset) {
+                            handleTick(msg.data);
+                        }
+                    } else if (msg.type === 'error') {
+                        log("API Error: " + msg.message, 'error');
+                        document.getElementById('loader').classList.add('hidden');
+                    }
+                } catch (e) {
+                    log("Message Processing Error: " + e.message, 'error');
+                }
+            };
+
+            ws.onerror = (err) => {
+                log("WebSocket Error", 'error');
+                document.getElementById('status').innerText = 'Error';
+            };
+
+            ws.onclose = () => {
+                log("WebSocket Closed. Retrying in 3s...", 'error');
+                document.getElementById('status').innerText = 'Disconnected';
+                setTimeout(connect, 3000);
+            };
+        }
+
+        function renderAssetList(assets) {
+            const list = document.getElementById('asset-list');
+            list.innerHTML = '';
+
+            const sorted = [...assets].sort((a, b) => {
+                const nameA = (a.name || a.symbol || "").toLowerCase();
+                const nameB = (b.name || b.symbol || "").toLowerCase();
+                return nameA.localeCompare(nameB);
+            });
+
+            sorted.forEach(asset => {
+                const div = document.createElement('div');
+                div.className = `px-4 py-3 cursor-pointer hover:bg-slate-800 border-b border-slate-800 transition flex items-center justify-between group ${selectedAsset === asset.symbol ? 'active-asset' : ''}`;
+                div.onclick = () => switchAsset(asset.symbol);
+
+                div.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="text-sm font-semibold group-hover:text-blue-400 transition">${asset.name || asset.symbol}</span>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function switchAsset(symbol) {
+            selectedAsset = symbol;
+            document.getElementById('current-asset').innerText = symbol;
+            document.getElementById('loader').classList.remove('hidden');
+            log(`Switching to ${symbol}...`);
+
+            // Highlight in list
+            document.querySelectorAll('#asset-list > div').forEach(el => {
+                el.classList.remove('active-asset');
+                if (el.innerText.trim() === symbol || el.innerText.includes(symbol)) {
+                    el.classList.add('active-asset');
+                }
+            });
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'switch',
+                    asset: symbol,
+                    period: parseInt(selectedPeriod)
+                }));
+            }
+            currentCandle = null;
+        }
+
+        function handleTick(tick) {
+            if (!candleSeries) return;
+
+            const ts = Math.floor(tick.time);
+            const price = parseFloat(tick.price);
+            const candleStart = Math.floor(ts / selectedPeriod) * selectedPeriod;
+
+            const priceEl = document.getElementById('current-price');
+            if (priceEl) {
+                const oldPrice = parseFloat(priceEl.innerText);
+                priceEl.innerText = price.toFixed(5);
+                priceEl.style.color = price >= oldPrice ? '#22c55e' : '#ef4444';
+            }
+
+            if (!currentCandle) {
+                currentCandle = { time: candleStart, open: price, high: price, low: price, close: price };
+            }
+
+            if (candleStart > currentCandle.time) {
+                // New candle
+                currentCandle = { time: candleStart, open: price, high: price, low: price, close: price };
+            } else {
+                // Update current candle
+                currentCandle.close = price;
+                currentCandle.high = Math.max(currentCandle.high, price);
+                currentCandle.low = Math.min(currentCandle.low, price);
+            }
+
+            try {
+                candleSeries.update(currentCandle);
+
+                // Update OHLC overlay
+                document.getElementById('ohlc-o').innerText = currentCandle.open.toFixed(5);
+                document.getElementById('ohlc-h').innerText = currentCandle.high.toFixed(5);
+                document.getElementById('ohlc-l').innerText = currentCandle.low.toFixed(5);
+                document.getElementById('ohlc-c').innerText = currentCandle.close.toFixed(5);
+            } catch (e) {
+                console.error("Chart update error:", e);
+            }
+        }
+
+        // Search functionality
+        document.getElementById('market-search').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('#asset-list > div').forEach(el => {
+                const text = el.innerText.toLowerCase();
+                if (text.includes(term)) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+        });
+
+        // Initialize
+        initChart();
+        connect();
+    </script>
+</body>
+
+</html>
