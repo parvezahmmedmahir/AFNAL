@@ -23,30 +23,57 @@ router = APIRouter(prefix="/lux")
 # --- GLOBAL STATE (MEMORY ENGINE) ---
 MASTER_SNAPSHOT: Dict[str, dict] = {}
 client = None
+last_reconnect_attempt = 0
+reconnect_cooldown = 30 # Seconds
 
 async def get_client():
-    global client
-    if client is None:
-        try:
-            email, password = credentials()
-            client = Quotex(email=email, password=password)
-            check, _ = await client.connect()
-            if not check: 
-                client = None
-                return None
-            
-            # --- AUTO-SUBSCRIBE TO ALL ASSETS ON STARTUP ---
-            print("🚀 LUX Memory Engine: Initializing broad subscription...")
-            instr = await client.get_instruments()
-            for i in instr:
-                if len(i) > 14 and i[14]: # If open
-                    client.start_candles_stream(i[1], 60)
-            print(f"✅ Subscribed to {len(instr)} assets for real-time tracking.")
-            
-        except Exception as e:
-            print(f"❌ Client Init Error: {e}")
+    global client, last_reconnect_attempt
+    
+    if client is not None:
+        return client
+
+    # Prevent rapid-fire login attempts (Anti-spam cooldown)
+    now = time.time()
+    if now - last_reconnect_attempt < reconnect_cooldown:
+        return None
+
+    last_reconnect_attempt = now
+    print("🚀 Connecting User Account ...")
+    try:
+        email, password = credentials()
+        client = Quotex(email=email, password=password)
+        check, reason = await client.connect()
+        
+        if not check:
+            print(f"❌ Connection Failed: {reason}")
             client = None
-    return client
+            return None
+            
+        print("✅ Account Connected Successfully!")
+        # --- AUTO-SUBSCRIBE TO ALL ASSETS ON STARTUP ---
+        # Run this in background so we don't block the memory engine
+        asyncio.create_task(subscribe_all_assets(client))
+        return client
+        
+    except Exception as e:
+        print(f"❌ Client Init Error: {e}")
+        client = None
+        return None
+
+async def subscribe_all_assets(cl):
+    """Subscribes to all active instruments for real-time memory tracking"""
+    try:
+        print("🔍 Scanning markets for broad subscription...")
+        instr = await cl.get_instruments()
+        count = 0
+        for i in instr:
+            if len(i) > 14 and i[14]: # If open
+                cl.start_candles_stream(i[1], 60)
+                count += 1
+                if count % 10 == 0: await asyncio.sleep(0.5) # Throttle subscription
+        print(f"✅ Subscribed to {count} assets for real-time tracking.")
+    except Exception as e:
+        print(f"⚠️ Subscription Error: {e}")
 
 async def core_engine_task():
     """Maintains real-time state and pushes to Supabase in milliseconds"""
