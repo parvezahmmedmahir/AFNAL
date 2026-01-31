@@ -32,3 +32,10 @@ services:
     env: node
     buildCommand: cd collectors && npm install
     startCommand: node collectors/1_recent_history.js & node collectors/2_daily_cycle.js & node collectors/3_monthly_archive.js
+
+  # ☁️ Supabase Cloud Sync (Background Worker)
+  - type: worker
+    name: quotex-supabase-sync
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python supabase_sync.py
