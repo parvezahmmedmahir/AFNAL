@@ -135,14 +135,22 @@ async def startup_event():
 
 @app.get("/")
 async def root():
+    q_domain = "Unknown"
+    if client and hasattr(client, 'api') and client.api:
+        # Check login object for current domain
+        from pyquotex.http.login import Login
+        q_domain = getattr(Login, 'base_url', 'Checking...')
+
     return {
         "status": "online",
         "connection": last_error,
+        "current_target": q_domain,
         "is_collecting": is_collecting,
         "total_assets": len(live_buffers),
         "endpoints": {
             "live_600": "/api/live/{asset}",
-            "assets": "/api/assets"
+            "assets": "/api/assets",
+            "verify_pin": "/api/verify?pin=XXXXXX"
         }
     }
 
