@@ -5,56 +5,24 @@ import json
 import os
 import time
 from pathlib import Path
-from typing import Optional, List
-from datetime import datetime
+from typing import Optional, Dict
 import uvicorn
 from fastapi.responses import HTMLResponse
 from pyquotex.stable_api import Quotex
-from pyquotex.config import credentials, load_session
+from pyquotex.config import credentials
 
 # --- INITIALIZATION ---
-app = FastAPI(
-    title="LUX Master Hub Pro", 
-    description="Professional Unified Hub - Branded Broker API with Supabase Storage",
-    version="2.2.0",
-    docs_url="/lux/docs",
-    redoc_url="/lux/redoc",
-    openapi_url="/lux/openapi.json"
-)
+app = FastAPI(title="LUX Master Hub Pro", version="2.3.0")
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Data directories
 DATA_DIR = Path(__file__).parent / "data"
 RECENT_DIR = DATA_DIR / "recent"
-DAILY_DIR = DATA_DIR / "24h"
-MONTHLY_DIR = DATA_DIR / "monthly"
-
-# Global Quotex client
-client = None
-
-# API Router with prefix
 router = APIRouter(prefix="/lux")
 
-# --- UTILS ---
-async def safe_read_json(file_path: Path):
-    """Resilient JSON reading with retries to prevent corruption errors"""
-    for _ in range(5):
-        try:
-            if not file_path.exists(): return None
-            with open(file_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except json.JSONDecodeError:
-            await asyncio.sleep(0.1)
-        except Exception:
-            break
-    return None
+# --- GLOBAL STATE (MEMORY ENGINE) ---
+# This fixes the Render "Isolated Container" problem
+MASTER_SNAPSHOT: Dict[str, dict] = {}
+client = None
 
 async def get_client():
     global client
@@ -62,90 +30,86 @@ async def get_client():
         try:
             email, password = credentials()
             client = Quotex(email=email, password=password)
-            check, reason = await client.connect()
-            if not check:
-                client = None
-                return None
-        except Exception:
-            client = None
-            return None
+            check, _ = await client.connect()
+            if not check: client = None
+        except: client = None
     return client
 
-# --- MASTER API ENDPOINTS (REST) ---
+async def core_engine_task():
+    """Background task to maintain real-time price state in memory"""
+    global client
+    while True:
+        cl = await get_client()
+        if cl:
+            try:
+                # Poll ticks from broker buffer
+                for asset in list(cl.api.realtime_price.keys()):
+                    ticks = cl.api.realtime_price.get(asset, [])
+                    if ticks:
+                        cl.api.realtime_price[asset] = []
+                        last_tick = ticks[-1]
+                        
+                        # Update or Create Candle in Memory
+                        price = last_tick['price']
+                        t = last_tick['time']
+                        candle_time = (t // 60) * 60
+                        
+                        if asset not in MASTER_SNAPSHOT or MASTER_SNAPSHOT[asset]['time'] != candle_time:
+                            MASTER_SNAPSHOT[asset] = {
+                                "time": candle_time,
+                                "open": price, "high": price, "low": price, "close": price
+                            }
+                        else:
+                            c = MASTER_SNAPSHOT[asset]
+                            c['close'] = price
+                            c['high'] = max(c['high'], price)
+                            c['low'] = min(c['low'], price)
+            except: pass
+        await asyncio.sleep(0.1)
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(core_engine_task())
+
+# --- MASTER API ENDPOINTS ---
 
 @router.get("/api/price/{asset}")
 async def get_latest_price(asset: str):
-    """Get latest price for an asset with full schema and market status"""
+    """Real-time price endpoint using the LUX Memory Engine"""
+    # 1. Check Memory Engine (Truly LIVE)
+    if asset in MASTER_SNAPSHOT:
+        c = MASTER_SNAPSHOT[asset]
+        return {
+            "asset": asset,
+            "price": c['close'],
+            "timestamp": c['time'],
+            "market_open": True, # If it's in memory, it's open
+            "status": "LIVE",
+            "candle": c,
+            "source": "memory_engine"
+        }
+
+    # 2. Check Disk Cache (Fallback)
     try:
-        # Load market status
-        market_open = True
-        status_data = await safe_read_json(DATA_DIR / "market_status.json")
-        if status_data and asset in status_data:
-            market_open = status_data[asset].get('open', True)
+        if (RECENT_DIR / f"{asset}.json").exists():
+            with open(RECENT_DIR / f"{asset}.json", 'r') as f:
+                data = json.load(f)
+                if data:
+                    return {
+                        "asset": asset, "price": data[-1]['close'], "timestamp": data[-1]['time'],
+                        "status": "CACHED", "candle": data[-1], "source": "disk_cache"
+                    }
+    except: pass
 
-        # 1. Path: Live Snapshot
-        snapshot = await safe_read_json(DATA_DIR / "live_snapshot.json")
-        if snapshot and asset in snapshot:
-            c = snapshot[asset]
-            return {
-                "asset": asset,
-                "price": c['close'],
-                "timestamp": c['time'],
-                "market_open": market_open,
-                "status": "LIVE",
-                "candle": {
-                    "time": c['time'],
-                    "open": c['open'],
-                    "high": c['high'],
-                    "low": c['low'],
-                    "close": c['close']
-                },
-                "source": "live_streaming"
-            }
-
-        # 2. Path: Cache Fallback
-        cached = await safe_read_json(RECENT_DIR / f"{asset}.json")
-        if cached:
-            c = cached[-1]
-            return {
-                "asset": asset,
-                "price": c['close'],
-                "timestamp": c['time'],
-                "market_open": market_open,
-                "status": "CACHED",
-                "candle": c,
-                "source": "disk_cache"
-            }
-
-        return {"asset": asset, "status": "NOT_FOUND"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"asset": asset, "status": "NOT_FOUND"}
 
 @router.get("/api/snapshot")
 async def get_market_snapshot():
-    """Aggregated snapshot for all assets"""
-    try:
-        snapshot = await safe_read_json(DATA_DIR / "live_snapshot.json")
-        if not snapshot:
-            return {"total": 0, "status": "INITIALIZING", "data": []}
-            
-        formatted = []
-        for asset, c in snapshot.items():
-            formatted.append({
-                "asset": asset,
-                "price": c['close'],
-                "timestamp": c['time'],
-                "candle": c,
-                "source": "live_streaming"
-            })
-            
-        return {
-            "total": len(formatted),
-            "status": "LIVE",
-            "data": sorted(formatted, key=lambda x: x['asset'])
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    """Returns memory state of all 80+ assets in one go"""
+    data = []
+    for asset, c in MASTER_SNAPSHOT.items():
+        data.append({"asset": asset, "price": c['close'], "ohlc": c})
+    return {"total": len(data), "status": "LIVE", "data": data}
 
 @router.get("/api/assets")
 async def get_assets():
@@ -155,68 +119,48 @@ async def get_assets():
             assets.append({"symbol": file.stem, "active": True})
     return {"total": len(assets), "assets": sorted(assets, key=lambda x: x['symbol'])}
 
-@router.get("/api/history/{asset}")
-async def get_historical_data(asset: str, days: int = 1):
-    """Fetches historical data from Supabase (Integration in progress)"""
-    # For now, return disk data
-    file_path = RECENT_DIR / f"{asset}.json"
-    data = await safe_read_json(file_path)
-    return {"asset": asset, "count": len(data) if data else 0, "candles": data if data else []}
-
 # --- DASHBOARD WEBSOCKET ---
 
 @app.get("/")
 async def get_dashboard():
-    return HTMLResponse(content=open("index.html", encoding="utf-8").read(), status_code=200)
+    return HTMLResponse(content=open("index.html", encoding="utf-8").read())
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    await websocket.send_json({"type": "hello", "message": "LUX Pro Connection Active"})
-    
     cl = await get_client()
-    if cl is None:
-        await websocket.send_json({"type": "error", "message": "Broker Login Required"})
+    if cl is None: 
         await websocket.close()
         return
-
-    # Background Relay
-    async def relay_ticks():
-        try:
-            while True:
-                current_assets = list(cl.api.realtime_price.keys())
-                for asset in current_assets:
-                    ticks = cl.api.realtime_price.get(asset, [])
-                    if ticks:
-                        cl.api.realtime_price[asset] = []
-                        for tick in ticks:
-                            await websocket.send_json({"type": "tick", "asset": asset, "data": tick})
-                await asyncio.sleep(0.05)
-        except: pass
-
-    relay_task = asyncio.create_task(relay_ticks())
     
+    # Send initial asset list
+    try:
+        instr = await cl.get_instruments()
+        await websocket.send_json({"type": "assets", "data": [{"symbol": i[1], "name": i[2], "open": bool(i[14])} for i in instr if len(i) > 14]})
+    except: pass
+
     try:
         while True:
-            raw_data = await websocket.receive_text()
-            data = json.loads(raw_data)
+            # Simple relay of memory engine ticks for dashboard
+            for asset, c in MASTER_SNAPSHOT.items():
+                await websocket.send_json({"type": "tick", "asset": asset, "data": {"price": c['close'], "time": c['time']}})
+            
+            raw = await websocket.receive_text()
+            data = json.loads(raw)
             if data["type"] == "switch":
                 asset = data["asset"]
                 cl.start_candles_stream(asset, 60)
                 history = await cl.get_candles_v3(asset, 600, 60)
                 await websocket.send_json({"type": "history", "asset": asset, "data": history})
             elif data["type"] == "subscribe_all":
-                instruments = await cl.get_instruments()
-                for i in instruments:
+                instr = await cl.get_instruments()
+                for i in instr:
                     if len(i) > 14 and i[14]: cl.start_candles_stream(i[1], 60)
+            await asyncio.sleep(1)
     except: pass
-    finally:
-        relay_task.cancel()
 
-# Global inclusion
 app.include_router(router)
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
-    print(f"💎 LUX MASTER HUB PRO V2.2 LIVE ON PORT {port}")
     uvicorn.run(app, host="0.0.0.0", port=port)
