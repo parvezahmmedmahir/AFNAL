@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import os
@@ -21,13 +21,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Prefix all routes with /lux
+router = APIRouter(prefix="/lux")
+
 # Data directories
 DATA_DIR = Path(__file__).parent / "data"
 RECENT_DIR = DATA_DIR / "recent"
 DAILY_DIR = DATA_DIR / "24h"
 MONTHLY_DIR = DATA_DIR / "monthly"
 
-@app.get("/")
+@router.get("/")
 async def root():
     """API Information"""
     return {
@@ -35,16 +38,16 @@ async def root():
         "version": "1.0.0",
         "status": "operational",
         "endpoints": {
-            "assets": "/api/assets",
-            "recent": "/api/recent/{asset}",
-            "daily": "/api/daily/{asset}",
-            "monthly": "/api/monthly/{asset}",
-            "latest_price": "/api/price/{asset}",
-            "ohlc": "/api/ohlc/{asset}"
+            "assets": "/lux/api/assets",
+            "recent": "/lux/api/recent/{asset}",
+            "daily": "/lux/api/daily/{asset}",
+            "monthly": "/lux/api/monthly/{asset}",
+            "latest_price": "/lux/api/price/{asset}",
+            "ohlc": "/lux/api/ohlc/{asset}"
         }
     }
 
-@app.get("/api/assets")
+@router.get("/api/assets")
 async def get_assets():
     """Get list of all available assets"""
     try:
@@ -66,7 +69,7 @@ async def get_assets():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/recent/{asset}")
+@router.get("/api/recent/{asset}")
 async def get_recent_data(asset: str, limit: Optional[int] = None):
     """
     Get recent candle data with LIVE status and real-time merge
@@ -126,7 +129,7 @@ async def get_recent_data(asset: str, limit: Optional[int] = None):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/daily/{asset}")
+@router.get("/api/daily/{asset}")
 async def get_daily_data(asset: str, date: Optional[str] = None):
     """
     Get 24-hour candle data
@@ -158,7 +161,7 @@ async def get_daily_data(asset: str, date: Optional[str] = None):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/monthly/{asset}")
+@router.get("/api/monthly/{asset}")
 async def get_monthly_data(asset: str, limit: Optional[int] = None):
     """
     Get monthly archive data (up to 30 days)
@@ -188,7 +191,7 @@ async def get_monthly_data(asset: str, limit: Optional[int] = None):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/price/{asset}")
+@router.get("/api/price/{asset}")
 async def get_latest_price(asset: str):
     """
     Get the latest price for an asset with market status
@@ -287,7 +290,7 @@ async def get_market_status(asset: str):
     except:
         return None
 
-@app.get("/api/ohlc/{asset}")
+@router.get("/api/ohlc/{asset}")
 async def get_ohlc(asset: str, period: Optional[int] = 1):
     """
     Get OHLC data for the last N candles
@@ -330,7 +333,7 @@ async def get_ohlc(asset: str, period: Optional[int] = 1):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/health")
+@router.get("/api/health")
 async def health_check():
     """Health check endpoint"""
     return {
@@ -342,8 +345,11 @@ async def health_check():
         }
     }
 
+# Include the router in the app
+app.include_router(router)
+
 if __name__ == "__main__":
     print("🚀 Starting OTC Market Data API...")
-    print("📊 API Documentation: http://127.0.0.1:8001/docs")
-    print("🔗 API Endpoint: http://127.0.0.1:8001")
+    print("📊 API Documentation: http://127.0.0.1:8001/lux/docs")
+    print("🔗 API Endpoint: http://127.0.0.1:8001/lux")
     uvicorn.run(app, host="0.0.0.0", port=8001)
